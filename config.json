@@ -1,0 +1,16 @@
+{
+  "general": {
+    "platform": 5,
+    "ignore_self": false,
+    "log_level": "info",
+    "host": "0.0.0.0",
+    "port": 5700,
+    "use_http": true,
+    "use_ws": true,
+    "access_token": "",
+    "enable_cors": true,
+    "enable_heartbeat": true,
+    "heartbeat_interval": 15000,
+    "rate_limit_interval": 500
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "name": "node-onebot2",
+  "version": "1.0.0",
+  "source": "src/main.ts",
+  "main": "bin/oicq.cjs",
+  "type": "module",
+  "repository": "git@github.com:Tim-Paik/node-onebot2.git",
+  "author": "Tim-Paik <timpaik@163.com>",
+  "license": "MPL-2.0",
+  "private": false,
+  "scripts": {
+    "build": "tsc",
+    "start": "tsc && node bin/oicq.js"
+  },
+  "devDependencies": {
+    "@types/node": "^18.6.3",
+    "@types/ws": "^8.5.3",
+    "typescript": ">=3.0.0"
+  },
+  "dependencies": {
+    "oicq": "^2.3.1",
+    "ws": "^8.8.1"
+  }
+}
