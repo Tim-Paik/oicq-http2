@@ -1,5 +1,5 @@
 {
-  "name": "node-onebot2",
+  "name": "oicq-http2",
   "version": "1.0.0",
   "source": "src/main.ts",
   "main": "bin/oicq.cjs",
