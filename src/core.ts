@@ -5,8 +5,8 @@ import WebSocket from "ws";
 import { WebSocketServer } from "ws";
 import crypto from "crypto";
 import * as oicq from "oicq";
-import * as api from "./api.js";
-import { Config, configDir } from "./configs.js";
+import * as api from "./api";
+import { Config, configDir } from "./configs";
 import { AddressInfo } from "net";
 
 let bot: oicq.Client;
@@ -315,8 +315,7 @@ function botLoginWithPassword(passFile: string) {
 function loop() {
   const help = `※你已成功登录，此控制台有简单的指令可用于调试。
 ※发言: send <target> <message>
-※下线结束程序: bye
-※执行任意代码: eval <code>`;
+※下线结束程序: bye`;
   console.log(help);
   process.stdin
     .on("data", async (rawInput) => {
@@ -335,14 +334,6 @@ function loop() {
           const target = parseInt(abc[0]);
           if (bot.gl.has(target)) bot.sendGroupMsg(target, abc[1]);
           else bot.sendPrivateMsg(target, abc[1]);
-          break;
-        case "eval":
-          try {
-            let res = await eval(param);
-            console.log("Result:", res);
-          } catch (e) {
-            console.log(e);
-          }
           break;
         default:
           console.log(help);

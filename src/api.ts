@@ -1,5 +1,5 @@
 import * as oicq from "oicq";
-import { availableActions } from "./actions.js";
+import { availableActions } from "./actions";
 
 export class NotFoundError extends Error {}
 
