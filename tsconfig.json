@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "allowSyntheticDefaultImports": true,
+    "downlevelIteration": true,
     "module": "ES2022",
     "moduleResolution": "Node16",
     "noImplicitAny": true,

@@ -100,7 +100,7 @@ export async function apply({
   action: string;
   params?: URLSearchParams;
   echo?: string;
-}) {
+}): Promise<string> {
   let is_async = action.includes("_async");
   if (is_async) action = action.replace("_async", "");
   let is_queue = action.includes("_rate_limited");
@@ -160,7 +160,19 @@ export async function apply({
     if (ret.data instanceof Map) ret.data = [...ret.data.values()];
 
     if (echo) ret.echo = echo;
-    return JSON.stringify(ret);
+    bot.logger.debug(typeof ret);
+    bot.logger.debug(JSON.stringify(ret));
+    return JSON.stringify(ret, (_key, value) => {
+      if (value instanceof Map) {
+        let obj: any = {};
+        for (let [k, v] of value) {
+          obj[k.toString()] = v;
+        }
+        return obj;
+      } else {
+        return value;
+      }
+    });
   } else {
     throw new NotFoundError();
   }
