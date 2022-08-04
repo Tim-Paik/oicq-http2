@@ -157,22 +157,15 @@ export async function apply({
       }
     }
 
-    if (ret.data instanceof Map) ret.data = [...ret.data.values()];
+    if (ret instanceof Map) {
+      ret = {
+        data: [...ret.values()],
+      };
+    }
 
     if (echo) ret.echo = echo;
-    bot.logger.debug(typeof ret);
-    bot.logger.debug(JSON.stringify(ret));
-    return JSON.stringify(ret, (_key, value) => {
-      if (value instanceof Map) {
-        let obj: any = {};
-        for (let [k, v] of value) {
-          obj[k.toString()] = v;
-        }
-        return obj;
-      } else {
-        return value;
-      }
-    });
+    bot.logger.debug(ret);
+    return JSON.stringify(ret);
   } else {
     throw new NotFoundError();
   }
