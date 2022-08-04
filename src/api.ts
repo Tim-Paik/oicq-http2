@@ -163,6 +163,12 @@ export async function apply({
       };
     }
 
+    if (ret instanceof Array) {
+      ret = {
+        data: ret,
+      };
+    }
+
     if (echo) ret.echo = echo;
     return JSON.stringify(ret);
   } else {
