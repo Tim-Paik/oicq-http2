@@ -25,7 +25,6 @@ function startup(account: number, configs: { [k: string]: Config }) {
   if (config.enable_heartbeat && config.use_ws) {
     setInterval(() => {
       const json = JSON.stringify({
-        self_id: account,
         time: ~~(Date.now() / 1000), // ~~number 取整数
         post_type: "meta_event",
         meta_event_type: "heartbeat",
@@ -249,8 +248,6 @@ function onWSOpen(account: number, ws: WebSocket.WebSocket) {
   });
   ws.send(
     JSON.stringify({
-      self_id: account,
-      time: ~~(Date.now() / 1000),
       post_type: "meta_event",
       meta_event_type: "lifecycle",
       sub_type: "connect",
@@ -258,8 +255,6 @@ function onWSOpen(account: number, ws: WebSocket.WebSocket) {
   );
   ws.send(
     JSON.stringify({
-      self_id: account,
-      time: ~~(Date.now() / 1000),
       post_type: "meta_event",
       meta_event_type: "lifecycle",
       sub_type: "enable",
