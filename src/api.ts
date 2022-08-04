@@ -3,7 +3,7 @@ import { availableActions } from "./actions";
 
 export class NotFoundError extends Error {}
 
-const fn_signs: { [x: string]: any } = {};
+const fn_signs: { [x: string]: string[] } = {};
 const bool_fields = [
   "no_cache",
   "auto_escape",
@@ -98,7 +98,7 @@ export async function apply({
   echo,
 }: {
   action: string;
-  params?: URLSearchParams;
+  params?: any;
   echo?: string;
 }): Promise<string> {
   let is_async = action.includes("_async");
@@ -128,10 +128,10 @@ export async function apply({
       if (Reflect.has(params, k)) {
         if (bool_fields.includes(k)) {
           let v = true;
-          if (params.get(k) === "0" || params.get(k) === "false") v = false;
-          params.set(k, v ? "true" : "false");
+          if (params[k] === "0" || params[k] === "false") v = false;
+          params[k] = v ? "true" : "false";
         }
-        param_arr.push(params.get(k));
+        param_arr.push(params[k]);
       }
     }
 
