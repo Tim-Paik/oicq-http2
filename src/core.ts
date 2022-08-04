@@ -22,9 +22,6 @@ function startup(account: number, configs: { [k: string]: Config }) {
     configs[account.toString()]
   );
 
-  let wss: WebSocketServer;
-  let websockets: Set<WebSocket> = new Set();
-
   if (config.enable_heartbeat && config.use_ws) {
     setInterval(() => {
       const json = JSON.stringify({
@@ -34,9 +31,6 @@ function startup(account: number, configs: { [k: string]: Config }) {
         meta_event_type: "heartbeat",
         interval: config.heartbeat_interval,
       });
-      websockets.forEach((ws) => {
-        ws.send(json);
-      });
       if (wss) {
         wss.clients.forEach((ws) => {
           ws.send(json);
@@ -45,7 +39,7 @@ function startup(account: number, configs: { [k: string]: Config }) {
     }, config.heartbeat_interval);
   }
   createBot(account, config, passFile);
-  createServer(account, config, wss);
+  createServer(account, config);
   setTimeout(botLogin, 500, passFile);
 }
 
@@ -125,7 +119,7 @@ function dipatch(event: any) {
   }
 }
 
-function createServer(account: number, config: Config, wss: WebSocketServer) {
+function createServer(account: number, config: Config) {
   if (!config.use_http && !config.use_ws) {
     return;
   }
