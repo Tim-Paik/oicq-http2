@@ -2,7 +2,7 @@ import startup from "./core";
 import configs from "./configs";
 import { Client } from "oicq";
 
-const account = parseInt(process.argv[process.argv.length - 1]);
+const account = parseInt(process.argv[process.argv.length - 1] as string);
 
 export function main() {
   if (account > 10000 && account < 0xffffffff) {

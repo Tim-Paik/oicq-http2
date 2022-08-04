@@ -16,11 +16,30 @@ let wss: WebSocketServer;
 function startup(account: number, configs: { [k: string]: Config }) {
   const passDir = path.join(configDir, account.toString());
   const passFile = path.join(passDir, "password");
+  const generalConfig = configs["general"];
+  const accountConfig = configs[account.toString()];
+  let config: Config;
 
-  const config: Config = Object.assign(
-    configs["general"],
-    configs[account.toString()]
-  );
+  if (generalConfig !== undefined) {
+    config = Object.assign(generalConfig, accountConfig);
+  } else if (accountConfig !== undefined) {
+    config = accountConfig;
+  } else {
+    config = {
+      platform: 5,
+      ignore_self: false,
+      log_level: "info",
+      host: "0.0.0.0",
+      port: 5700,
+      use_http: true,
+      use_ws: true,
+      access_token: "",
+      enable_cors: true,
+      enable_heartbeat: true,
+      heartbeat_interval: 15000,
+      rate_limit_interval: 500,
+    };
+  }
 
   if (config.enable_heartbeat && config.use_ws) {
     setInterval(() => {
@@ -76,7 +95,7 @@ function createBot(account: number, config: Config, passFile: string) {
   });
   bot.on("system.login.error", (data) => {
     if (data.code === -2) {
-      return bot.login();
+      bot.login();
     }
     if (data.message.includes("密码错误")) {
       botLoginWithPassword(passFile);
@@ -110,12 +129,10 @@ function createBot(account: number, config: Config, passFile: string) {
 
 function dipatch(event: any) {
   const json = JSON.stringify(event);
-  if (wss != undefined) {
-    wss.clients.forEach((ws) => {
-      bot.logger.debug(`正向WS上报事件: ` + json);
-      ws.send(json);
-    });
-  }
+  wss?.clients.forEach((ws) => {
+    bot.logger.debug(`正向WS上报事件: ` + json);
+    ws.send(json);
+  });
 }
 
 function createServer(account: number, config: Config) {
@@ -146,7 +163,7 @@ function createServer(account: number, config: Config) {
       if (!req.headers["authorization"].includes(config.access_token))
         return res.writeHead(403).end();
     }
-    onHttpReq(req, res, config);
+    return onHttpReq(req, res, config);
   });
   if (config.use_ws) {
     wss = new WebSocketServer({ server });
@@ -190,19 +207,7 @@ function onWSOpen(account: number, ws: WebSocket.WebSocket) {
     let data = JSON.parse(rawData.toString());
     try {
       let ret;
-      if (
-        data.action === ".handle_quick_operation" ||
-        data.action === ".handle_quick_operation_async" ||
-        data.action === ".handle_quick_operation_rate_limited"
-      ) {
-        api.handleQuickOperation(data);
-        ret = JSON.stringify({
-          retcode: 1,
-          status: "async",
-          data: null,
-          echo: data.echo,
-        });
-      } else if (data.action === "http_proxy") {
+      if (data.action === "http_proxy") {
         let config: AxiosRequestConfig;
         let url = new URL(data.params.url);
         config = {
@@ -225,8 +230,9 @@ function onWSOpen(account: number, ws: WebSocket.WebSocket) {
       }
       ws.send(ret);
     } catch (e) {
-      if (e instanceof api.NotFoundError) var retcode = 1404;
-      else var retcode = 1400;
+      let retcode: number;
+      if (e instanceof api.NotFoundError) retcode = 1404;
+      else retcode = 1400;
       ws.send(
         JSON.stringify({
           retcode: retcode,
@@ -260,7 +266,7 @@ async function onHttpReq(
 ) {
   res.setHeader("Content-Type", "application/json; charset=utf-8");
   if (config.enable_cors) res.setHeader("Access-Control-Allow-Origin", "*");
-  const url = new URL(req.url);
+  const url = new URL(req.url as string);
   const action = url.pathname.replace(/\//g, "");
   if (req.method === "GET") {
     bot.logger.debug(`收到GET请求: ` + req.url);
@@ -285,10 +291,10 @@ async function onHttpReq(
           params = new URLSearchParams(data);
         else return res.writeHead(406).end();
         const ret = await api.apply({ action, params });
-        res.end(ret);
+        return res.end(ret);
       } catch (e) {
-        if (e instanceof api.NotFoundError) res.writeHead(404).end();
-        else res.writeHead(400).end();
+        if (e instanceof api.NotFoundError) return res.writeHead(404).end();
+        else return res.writeHead(400).end();
       }
     });
   } else {
@@ -299,7 +305,7 @@ async function onHttpReq(
 function botLogin(passFile: string) {
   try {
     const password = fs.readFileSync(passFile);
-    bot.login(password.length ? password : null);
+    bot.login(password.length ? password : undefined);
   } catch {
     botLoginWithPassword(passFile);
   }
@@ -317,7 +323,7 @@ function botLoginWithPassword(passFile: string) {
     fs.writeFileSync(passFile, password, {
       mode: 0o600,
     });
-    bot.login(password);
+    return bot.login(password);
   });
 }
 
@@ -330,7 +336,7 @@ function loop() {
     .on("data", async (rawInput) => {
       let input = rawInput.toString().trim();
       if (!input) return;
-      const cmd = input.split(" ")[0];
+      const cmd = input.split(" ")[0] as string;
       const param = input.replace(cmd, "").trim();
       switch (cmd) {
         case "bye":
@@ -339,10 +345,14 @@ function loop() {
           });
           break;
         case "send":
-          const abc = param.split(" ");
-          const target = parseInt(abc[0]);
-          if (bot.gl.has(target)) bot.sendGroupMsg(target, abc[1]);
-          else bot.sendPrivateMsg(target, abc[1]);
+          const arr = param.split(" ");
+          if (arr.length !== 2) {
+            console.log(`send <target> <message>`);
+            return;
+          }
+          const target = parseInt(arr[0] as string);
+          if (bot.gl.has(target)) bot.sendGroupMsg(target, arr[1] as string);
+          else bot.sendPrivateMsg(target, arr[1] as string);
           break;
         default:
           console.log(help);
