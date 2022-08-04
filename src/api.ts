@@ -42,7 +42,7 @@ export function setBot(client: oicq.Client, rate_limit: number) {
     if (bot[fn]) {
       fn_signs[fn] = bot[fn]
         .toString()
-        .match(/\(.*\)/)[0]
+        .match(/\(.*?\)/)[0]
         .replace("(", "")
         .replace(")", "")
         .split(",");
@@ -164,7 +164,6 @@ export async function apply({
     }
 
     if (echo) ret.echo = echo;
-    bot.logger.debug(ret);
     return JSON.stringify(ret);
   } else {
     throw new NotFoundError();

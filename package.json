@@ -12,9 +12,9 @@
   "private": false,
   "scripts": {
     "esbuild": "esbuild",
-    "prepare": "esbuild src/main.ts --outfile=bin/cli.js --bundle --minify --platform=node",
+    "prepare": "esbuild src/main.ts --outfile=bin/cli.js --bundle --minify-syntax --minify-whitespace --platform=node --log-level=warning",
     "clean": "rm bin/cli.js",
-    "start": "esbuild src/main.ts --outfile=bin/cli.js --bundle --minify --platform=node && node bin/oicq-http2.js"
+    "start": "npm run prepare && node bin/oicq-http2.js"
   },
   "devDependencies": {
     "@types/node": "^18.6.3",

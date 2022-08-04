@@ -209,26 +209,17 @@ function onWSOpen(account: number, ws: WebSocket.WebSocket) {
           headers: { Cookie: bot.cookies[url.hostname as oicq.Domain] },
           withCredentials: true,
         };
-        try {
-          config = Object.assign(config, data.params);
-          let res = await axios(config);
-          ret = JSON.stringify({
-            data: {
-              status: res.status,
-              statusText: res.statusText,
-              headers: res.headers,
-              data: res.data,
-            },
-            echo: data.echo,
-          });
-        } catch (e) {
-          ret = JSON.stringify({
-            retcode: 1400,
-            status: "failed",
-            data: e,
-            echo: data.echo,
-          });
-        }
+        config = Object.assign(config, data.params);
+        let res = await axios(config);
+        ret = JSON.stringify({
+          data: {
+            status: res.status,
+            statusText: res.statusText,
+            headers: res.headers,
+            data: res.data,
+          },
+          echo: data.echo,
+        });
       } else {
         ret = await api.apply(data);
       }

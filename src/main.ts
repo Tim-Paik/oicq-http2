@@ -1,5 +1,6 @@
 import startup from "./core";
 import configs from "./configs";
+import { Client } from "oicq";
 
 const account = parseInt(process.argv[process.argv.length - 1]);
 
@@ -16,3 +17,5 @@ export function main() {
     console.log(a);
   });
 }
+
+export { Client };
