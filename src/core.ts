@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import http from "http";
+import axios, { AxiosRequestConfig } from "axios";
 import WebSocket from "ws";
 import { WebSocketServer } from "ws";
 import crypto from "crypto";
@@ -116,7 +117,7 @@ function createBot(account: number, config: Config, passFile: string) {
 
 function dipatch(event: any) {
   const json = JSON.stringify(event);
-  if (wss) {
+  if (wss != undefined) {
     wss.clients.forEach((ws) => {
       bot.logger.debug(`正向WS上报事件: ` + json);
       ws.send(json);
@@ -195,20 +196,48 @@ function onWSOpen(account: number, ws: WebSocket.WebSocket) {
     bot.logger.debug(`收到WS消息: ` + rawData);
     let data = JSON.parse(rawData.toString());
     try {
+      let ret;
       if (
         data.action === ".handle_quick_operation" ||
         data.action === ".handle_quick_operation_async" ||
         data.action === ".handle_quick_operation_rate_limited"
       ) {
         api.handleQuickOperation(data);
-        var ret = JSON.stringify({
+        ret = JSON.stringify({
           retcode: 1,
           status: "async",
           data: null,
           echo: data.echo,
         });
+      } else if (data.action === "http_proxy") {
+        let config: AxiosRequestConfig;
+        let url = new URL(data.params.url);
+        config = {
+          headers: { Cookie: bot.cookies[url.hostname as oicq.Domain] },
+          withCredentials: true,
+        };
+        try {
+          config = Object.assign(config, data.params);
+          let res = await axios(config);
+          ret = JSON.stringify({
+            data: {
+              status: res.status,
+              statusText: res.statusText,
+              headers: res.headers,
+              data: res.data,
+            },
+            echo: data.echo,
+          });
+        } catch (e) {
+          ret = JSON.stringify({
+            retcode: 1400,
+            status: "failed",
+            data: e,
+            echo: data.echo,
+          });
+        }
       } else {
-        var ret = await api.apply(data);
+        ret = await api.apply(data);
       }
       ws.send(ret);
     } catch (e) {
