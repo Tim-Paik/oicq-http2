@@ -225,6 +225,45 @@ function onWSOpen(account: number, ws: WebSocket.WebSocket) {
           },
           echo: data.echo,
         });
+      } else if (data.action === "get_login_info") {
+        let onlinestatus: string;
+        switch (bot.status) {
+          case oicq.OnlineStatus.Absent:
+            onlinestatus = "absent";
+            break;
+          case oicq.OnlineStatus.Busy:
+            onlinestatus = "busy";
+            break;
+          case oicq.OnlineStatus.DontDisturb:
+            onlinestatus = "dontdisturb";
+            break;
+          case oicq.OnlineStatus.Invisible:
+            onlinestatus = "invisible";
+            break;
+          case oicq.OnlineStatus.Online:
+            onlinestatus = "online";
+            break;
+          case oicq.OnlineStatus.Qme:
+            onlinestatus = "qme";
+            break;
+        }
+        ret = JSON.stringify({
+          data: {
+            account: {
+              uin: bot.uin,
+              status: onlinestatus,
+              nickname: bot.nickname,
+              sex: bot.sex,
+              age: bot.age,
+            },
+            oicq: {
+              version: "2.3.1",
+              http_api: "1.0.2",
+              stat: bot.stat,
+            },
+          },
+          echo: data.echo,
+        });
       } else {
         ret = await api.apply(data);
       }
@@ -235,9 +274,9 @@ function onWSOpen(account: number, ws: WebSocket.WebSocket) {
       else retcode = 1400;
       ws.send(
         JSON.stringify({
-          retcode: retcode,
-          status: "failed",
-          data: null,
+          data: {
+            self_id: bot,
+          },
           echo: data.echo,
         })
       );
