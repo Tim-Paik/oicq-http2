@@ -1,7 +1,6 @@
 import fs from "fs";
 import path from "path";
 import http from "http";
-import axios, { AxiosRequestConfig } from "axios";
 import WebSocket from "ws";
 import { WebSocketServer } from "ws";
 import crypto from "crypto";
@@ -9,6 +8,7 @@ import * as oicq from "oicq";
 import * as api from "./api";
 import { Config, configDir } from "./configs";
 import { AddressInfo } from "net";
+import * as extra from "./extra";
 
 let bot: oicq.Client;
 let wss: WebSocketServer;
@@ -57,7 +57,7 @@ function startup(account: number, configs: { [k: string]: Config }) {
     }, config.heartbeat_interval);
   }
   createBot(account, config, passFile);
-  createServer(account, config);
+  createServer(config);
   setTimeout(botLogin, 500, passFile);
 }
 
@@ -135,7 +135,7 @@ function dipatch(event: any) {
   });
 }
 
-function createServer(account: number, config: Config) {
+function createServer(config: Config) {
   if (!config.use_http && !config.use_ws) {
     return;
   }
@@ -184,7 +184,7 @@ function createServer(account: number, config: Config) {
         )
           return ws.close(1002);
       }
-      onWSOpen(account, ws);
+      onWSOpen(ws);
     });
   }
   server
@@ -201,82 +201,26 @@ function createServer(account: number, config: Config) {
     });
 }
 
-function onWSOpen(account: number, ws: WebSocket.WebSocket) {
+function onWSOpen(ws: WebSocket.WebSocket) {
   ws.on("message", async (rawData) => {
     bot.logger.debug(`收到WS消息: ` + rawData);
     let data = JSON.parse(rawData.toString());
     try {
       let ret;
-      if (data.action === "http_proxy") {
-        let config: AxiosRequestConfig;
-        let url = new URL(data.params.url);
-        config = {
-          headers: { Cookie: bot.cookies[url.hostname as oicq.Domain] },
-          withCredentials: true,
-        };
-        config = Object.assign(config, data.params);
-        let res = await axios(config);
-        ret = JSON.stringify({
-          data: {
-            status: res.status,
-            statusText: res.statusText,
-            headers: res.headers,
-            data: res.data,
-          },
-          echo: data.echo,
-        });
-      } else if (data.action === "get_login_info") {
-        let onlinestatus: string;
-        switch (bot.status) {
-          case oicq.OnlineStatus.Absent:
-            onlinestatus = "absent";
-            break;
-          case oicq.OnlineStatus.Busy:
-            onlinestatus = "busy";
-            break;
-          case oicq.OnlineStatus.DontDisturb:
-            onlinestatus = "dontdisturb";
-            break;
-          case oicq.OnlineStatus.Invisible:
-            onlinestatus = "invisible";
-            break;
-          case oicq.OnlineStatus.Online:
-            onlinestatus = "online";
-            break;
-          case oicq.OnlineStatus.Qme:
-            onlinestatus = "qme";
-            break;
-        }
-        ret = JSON.stringify({
-          data: {
-            account: {
-              uin: bot.uin,
-              status: onlinestatus,
-              nickname: bot.nickname,
-              sex: bot.sex,
-              age: bot.age,
-            },
-            oicq: {
-              version: "2.3.1",
-              http_api: "1.0.2",
-              stat: bot.stat,
-            },
-          },
-          echo: data.echo,
-        });
+      if (Object.keys(extra.extraActions).includes(data.action)) {
+        ret = await extra.apply(bot, data);
       } else {
         ret = await api.apply(data);
       }
       ws.send(ret);
     } catch (e) {
-      let retcode: number;
-      if (e instanceof api.NotFoundError) retcode = 1404;
-      else retcode = 1400;
+      let error: number;
+      if (e instanceof api.NotFoundError) error = 1404;
+      else error = 1400;
       ws.send(
         JSON.stringify({
-          data: {
-            self_id: bot,
-          },
+          self_id: bot.uin,
+          error: error,
           echo: data.echo,
         })
       );
