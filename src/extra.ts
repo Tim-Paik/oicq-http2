@@ -53,6 +53,7 @@ export const extraActions = {
         version: "2.3.1",
         http_api: "1.0.2",
         stat: bot.stat,
+        bkn: bot.bkn,
       },
     };
   },
