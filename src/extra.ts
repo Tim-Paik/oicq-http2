@@ -42,19 +42,21 @@ export const extraActions = {
         break;
     }
     return {
-      account: {
-        uin: bot.uin,
-        status: onlinestatus,
-        nickname: bot.nickname,
-        sex: bot.sex,
-        age: bot.age,
-      },
-      oicq: {
-        version: "2.3.1",
-        http_api: "1.0.2",
-        stat: bot.stat,
-        bkn: bot.bkn,
-      },
+      uin: bot.uin,
+      status: onlinestatus,
+      nickname: bot.nickname,
+      sex: bot.sex,
+      age: bot.age,
+      bkn: bot.bkn,
+    };
+  },
+
+  get_version_info: async (bot: oicq.Client, data: any): Promise<Object> => {
+    return {
+      app_name: "oicq2",
+      version: "2.3.1",
+      http_api: "1.1.0",
+      stat: bot.stat,
     };
   },
 };
