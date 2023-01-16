@@ -60,22 +60,26 @@ export const extraActions = {
     };
   },
 
+  // PS：它有时候 pick 到的对象是空的但是操作也能成功，很迷惑所以我不进行空判断了
   set_message_read: async (bot: oicq.Client, data: any): Promise<Object> => {
-    try {
-      const user = bot.pickUser(data.params.uid);
-      if(Object.keys(user).length > 0) {
-        user.markRead();
-      } else {
-        throw "联系人不存在。";
-      }
-    } catch (e) {
-      return {
-        error: 1400
-      };
-    }
-    return {
-      error: 0
-    };
+    bot.reportReaded(data.params.message_id);
+    return { error: 0 };
+  },
+
+  get_file_url: async (bot: oicq.Client, data: any): Promise<Object> => {
+    if (data.params.message_id.length > 24) {
+			return { url: await bot.pickGroup(data.params.id).getFileUrl(data.params.fid) }
+		} else {
+			return { url: await bot.pickUser(data.params.id).getFileUrl(data.params.fid) }
+		}
+  },
+
+  get_video_url: async (bot: oicq.Client, data: any): Promise<Object> => {
+    if (data.params.message_id.length > 24) {
+			return { url: await bot.pickGroup(data.params.id).getVideoUrl(data.params.fid, data.params.md5) }
+		} else {
+			return { url: await bot.pickUser(data.params.id).getVideoUrl(data.params.fid, data.params.md5) }
+		}
   },
 
 };
