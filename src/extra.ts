@@ -59,6 +59,25 @@ export const extraActions = {
       stat: bot.stat,
     };
   },
+
+  set_message_read: async (bot: oicq.Client, data: any): Promise<Object> => {
+    try {
+      const user = bot.pickUser(data.params.uid);
+      if(Object.keys(user).length > 0) {
+        user.markRead();
+      } else {
+        throw "联系人不存在。";
+      }
+    } catch (e) {
+      return {
+        error: 1400
+      };
+    }
+    return {
+      error: 0
+    };
+  },
+
 };
 
 export async function apply(bot: oicq.Client, data: any): Promise<string> {
