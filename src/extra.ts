@@ -1,5 +1,6 @@
 import axios, { AxiosRequestConfig } from "axios";
 import * as oicq from "oicq";
+import fs from "fs";
 
 export const extraActions = {
   http_proxy: async (bot: oicq.Client, data: any): Promise<Object> => {
@@ -82,11 +83,35 @@ export const extraActions = {
 		}
   },
 
+  upload_file: async (bot: oicq.Client, data: any): Promise<Object> => {
+    // 使用 HTTP 请求来上传要发送的文件并发送
+    let status = {} as { [key: string]: any };
+    try {
+      if(data.params.file) {
+        const file = data.params.file;
+        if (data.params.type == 'group') {
+          const group = bot.pickGroup(data.params.id);
+          status = await group.fs.upload(file.path, '/', file.originalFilename);
+        } else {
+          const friend = bot.pickFriend(data.params.id);
+          status['info'] = await friend.sendFile(file.path, file.originalFilename);
+        }
+      }
+    } finally {
+      if(data.params.file) fs.unlinkSync(data.params.file.path);
+    }
+    return status;
+  }
 };
 
 export async function apply(bot: oicq.Client, data: any): Promise<string> {
-  return JSON.stringify({
-    data: await Reflect.get(extraActions, data.action)(bot, data),
-    echo: data.echo,
-  });
+  if(data.echo) {
+    return JSON.stringify({
+      data: await Reflect.get(extraActions, data.action)(bot, data),
+      echo: data.echo,
+    });
+  } else {
+    // SS: 没有 echo 的情况是给 HTTP 请求用的
+    return JSON.stringify(await Reflect.get(extraActions, data.action)(bot, data));
+  }
 }

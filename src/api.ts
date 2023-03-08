@@ -59,6 +59,8 @@ export function setBot(client: oicq.Client, rate_limit: number) {
     fn_signs[fn] = sign ? sign : [];
     fn_signs[fn]?.forEach((v: string, i: number, arr: string[]) => {
       arr[i] = v.replace(/=.+/, "").trim();
+      // SS：去掉参数名里的一切数字 ……
+      arr[i] = v.replace(/[0-9]+/g, "");
     });
   }
 }
@@ -98,6 +100,11 @@ export async function apply({
     availableActions.includes(action)
   ) {
     const param_arr = [];
+    
+    // FIX: URLSearchParams 对象在处理为 params 时转换错误
+    if(params instanceof URLSearchParams) {
+      params = Object.fromEntries(params);
+    }
 
     let sign = fn_signs[action];
     if (sign !== undefined) {
