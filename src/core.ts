@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import http from "http";
+import multiparty from "multiparty";
 import WebSocket from "ws";
 import { WebSocketServer } from "ws";
 import crypto from "crypto";
@@ -214,6 +215,7 @@ function onWSOpen(ws: WebSocket.WebSocket) {
       }
       ws.send(ret);
     } catch (e) {
+      console.log(e);
       let error: number;
       if (e instanceof api.NotFoundError) error = 1404;
       else error = 1400;
@@ -249,7 +251,8 @@ async function onHttpReq(
 ) {
   res.setHeader("Content-Type", "application/json; charset=utf-8");
   if (config.enable_cors) res.setHeader("Access-Control-Allow-Origin", "*");
-  const url = new URL(req.url as string);
+  // FIX: 当请求的url为 / 时，req.url 为 undefined
+  const url = new URL(req.url as string, `http://${req.headers.host}`);
   const action = url.pathname.replace(/\//g, "");
   if (req.method === "GET") {
     bot.logger.debug(`收到GET请求: ` + req.url);
@@ -261,25 +264,57 @@ async function onHttpReq(
       res.writeHead(404).end();
     }
   } else if (req.method === "POST") {
-    let rawData: Array<any>;
-    req.on("data", (chunk) => rawData.push(chunk));
-    req.on("end", async () => {
-      try {
-        let data = Buffer.concat(rawData).toString();
-        bot.logger.debug(`收到POST请求: ` + data);
-        let params,
-          ct = req.headers["content-type"];
-        if (!ct || ct.includes("json")) params = data ? JSON.parse(data) : {};
-        else if (ct && ct.includes("x-www-form-urlencoded"))
-          params = new URLSearchParams(data);
-        else return res.writeHead(406).end();
-        const ret = await api.apply({ action, params });
-        return res.end(ret);
-      } catch (e) {
-        if (e instanceof api.NotFoundError) return res.writeHead(404).end();
-        else return res.writeHead(400).end();
-      }
-    });
+    if(req.headers["content-type"]?.includes("form-data")) {
+      // SS：特殊处理表单提交
+      const form = new multiparty.Form();
+      form.parse(req, async function(err, fields, files) {
+        if(err == null) {
+          try {
+            let params = fields;
+            Object.keys(fields).forEach((item: string) => {
+              params[item] = fields[item][0];
+            })
+            if(Object.keys(files).length > 0) {
+              // 有文件的话只取第一个
+              params.file = files.file[0];
+            }
+            let ret;
+            if (Object.keys(extra.extraActions).includes(action)) {
+              ret = await extra.apply(bot, { action, params });
+            } else {
+              ret = await api.apply({ action, params });
+            }
+            return res.end(ret);
+          } catch(e) {
+            console.log(e)
+            if (e instanceof api.NotFoundError) return res.writeHead(404).end();
+            else return res.writeHead(400).end();
+          }
+        } else {
+          return res.writeHead(406).end();
+        }
+      });
+    } else {
+      let rawData: Array<any>;
+      req.on("data", (chunk) => rawData.push(chunk));
+      req.on("end", async () => {
+        try {
+          let data = Buffer.concat(rawData).toString();
+          bot.logger.debug(`收到POST请求: ` + data);
+          let params,
+            ct = req.headers["content-type"];
+          if (!ct || ct.includes("json")) params = data ? JSON.parse(data) : {};
+          else if (ct && ct.includes("x-www-form-urlencoded"))
+            params = new URLSearchParams(data);
+          else return res.writeHead(406).end();
+          const ret = await api.apply({ action, params });
+          return res.end(ret);
+        } catch (e) {
+          if (e instanceof api.NotFoundError) return res.writeHead(404).end();
+          else return res.writeHead(400).end();
+        }
+      });
+    }
   } else {
     res.writeHead(405).end();
   }
