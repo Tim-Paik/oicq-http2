@@ -141,6 +141,8 @@ function createServer(config: Config) {
     return;
   }
   let server = http.createServer((req, res) => {
+    res.setHeader("Content-Type", "application/json; charset=utf-8");
+    if(config.enable_cors) res.setHeader('Access-Control-Allow-Origin', '*');
     if (!config.use_http) return res.writeHead(404).end();
     if (req.method === "OPTIONS" && config.enable_cors) {
       return res
@@ -215,7 +217,6 @@ function onWSOpen(ws: WebSocket.WebSocket) {
       }
       ws.send(ret);
     } catch (e) {
-      console.log(e);
       let error: number;
       if (e instanceof api.NotFoundError) error = 1404;
       else error = 1400;
@@ -249,8 +250,6 @@ async function onHttpReq(
   res: http.ServerResponse,
   config: Config
 ) {
-  res.setHeader("Content-Type", "application/json; charset=utf-8");
-  if (config.enable_cors) res.setHeader("Access-Control-Allow-Origin", "*");
   // FIX: 当请求的url为 / 时，req.url 为 undefined
   const url = new URL(req.url as string, `http://${req.headers.host}`);
   const action = url.pathname.replace(/\//g, "");
