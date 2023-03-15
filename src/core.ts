@@ -5,7 +5,7 @@ import multiparty from "multiparty";
 import WebSocket from "ws";
 import { WebSocketServer } from "ws";
 import crypto from "crypto";
-import * as oicq from "oicq";
+import * as oicq from "icqq";
 import * as api from "./api";
 import { Config, configDir } from "./configs";
 import { AddressInfo } from "net";
@@ -59,11 +59,11 @@ function startup(account: number, configs: { [k: string]: Config }) {
   }
   createBot(account, config, passFile);
   createServer(config);
-  setTimeout(botLogin, 500, passFile);
+  setTimeout(botLogin, 500, account, passFile);
 }
 
 function createBot(account: number, config: Config, passFile: string) {
-  bot = oicq.createClient(account, {
+  bot = oicq.createClient({
     log_level: config.log_level,
     platform: config.platform,
     ignore_self: config.ignore_self,
@@ -99,7 +99,7 @@ function createBot(account: number, config: Config, passFile: string) {
       bot.login();
     }
     if (data.message.includes("密码错误")) {
-      botLoginWithPassword(passFile);
+      botLoginWithPassword(account, passFile);
     } else {
       bot.terminate();
     }
@@ -319,16 +319,16 @@ async function onHttpReq(
   }
 }
 
-function botLogin(passFile: string) {
+function botLogin(account: number, passFile: string) {
   try {
     const password = fs.readFileSync(passFile);
-    bot.login(password.length ? password : undefined);
+    bot.login(account, password.length ? password : undefined);
   } catch {
-    botLoginWithPassword(passFile);
+    botLoginWithPassword(account, passFile);
   }
 }
 
-function botLoginWithPassword(passFile: string) {
+function botLoginWithPassword(account: number, passFile: string) {
   console.log("请输入密码 (直接按回车扫码登录): ");
   process.stdin.once("data", (input) => {
     let inputStr = input.toString().trim();
@@ -340,7 +340,7 @@ function botLoginWithPassword(passFile: string) {
     fs.writeFileSync(passFile, password, {
       mode: 0o600,
     });
-    return bot.login(password);
+    return bot.login(account, password);
   });
 }
 

@@ -1,6 +1,6 @@
 import startup from "./core";
 import configs from "./configs";
-import { Client } from "oicq";
+import { Client } from "icqq";
 
 const account = parseInt(process.argv[process.argv.length - 1] as string);
 

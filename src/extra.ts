@@ -1,5 +1,5 @@
 import axios, { AxiosRequestConfig } from "axios";
-import * as oicq from "oicq";
+import * as oicq from "icqq";
 import fs from "fs";
 
 export const extraActions = {
