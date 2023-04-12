@@ -61,6 +61,10 @@ export const extraActions = {
     };
   },
 
+  get_class_info: async (bot: oicq.Client, data: any): Promise<Object> => {
+    return Array.from(bot.classes, ([key, value]) => ({[key]: value}));
+  },
+
   // PS：它有时候 pick 到的对象是空的但是操作也能成功，很迷惑所以我不进行空判断了
   set_message_read: async (bot: oicq.Client, data: any): Promise<Object> => {
     bot.reportReaded(data.params.message_id);
