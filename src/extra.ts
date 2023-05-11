@@ -2,6 +2,9 @@ import axios, { AxiosRequestConfig } from "axios";
 import * as oicq from "icqq";
 import fs from "fs";
 
+import info from '../package.json'
+import oicqinfo from 'icqq/package.json'
+
 export const extraActions = {
   http_proxy: async (bot: oicq.Client, data: any): Promise<Object> => {
     let config: AxiosRequestConfig;
@@ -55,8 +58,11 @@ export const extraActions = {
   get_version_info: async (bot: oicq.Client, data: any): Promise<Object> => {
     return {
       app_name: "oicq2",
-      version: "2.3.1",
-      http_api: "1.1.0",
+      version: info.version,
+      bot_info: {
+        bot_info_name: oicqinfo.name,
+        bot_info_version: oicqinfo.version
+      },
       stat: bot.stat,
     };
   },

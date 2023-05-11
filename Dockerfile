@@ -1,6 +1,6 @@
 # Dockerfile for oicq2-http
 
-FROM node:19
+FROM node:lts-bullseye-slim
 
 # 运行文件夹
 WORKDIR /usr/src/app

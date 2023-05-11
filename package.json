@@ -1,6 +1,6 @@
 {
   "name": "oicq-http2",
-  "version": "1.1.0",
+  "version": "1.2.1",
   "source": "src/main.ts",
   "main": "bin/oicq-http2.js",
   "bin": {
@@ -24,7 +24,7 @@
   },
   "dependencies": {
     "axios": "^0.27.2",
-    "icqq": "^0.0.31",
+    "icqq": "^0.3.3",
     "multiparty": "^4.2.3",
     "ws": "^8.8.1"
   }

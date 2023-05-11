@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
     "alwaysStrict": true,
     "downlevelIteration": true,
     "module": "ES2022",
