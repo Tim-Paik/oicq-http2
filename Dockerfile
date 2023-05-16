@@ -1,6 +1,10 @@
 # Dockerfile for oicq2-http
 
-FROM node:lts-bullseye-slim
+FROM alpine:latest
+# 如果无法流畅的连接 alpine 官方包管理仓库的话，可以替换镜像
+# RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g' /etc/apk/repositories
+RUN apk add --no-cache --update nodejs npm
+RUN npm install yarn -g
 
 # 运行文件夹
 WORKDIR /usr/src/app
