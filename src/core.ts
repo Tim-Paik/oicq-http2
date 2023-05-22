@@ -16,6 +16,7 @@ let wss: WebSocketServer;
 
 function startup(account: number, configs: { [k: string]: Config }) {
   const passDir = path.join(configDir, account.toString());
+  if(!fs.existsSync(passDir)) fs.mkdirSync(passDir);
   const passFile = path.join(passDir, "password");
   const generalConfig = configs["general"];
   const accountConfig = configs[account.toString()];
