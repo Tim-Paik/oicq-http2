@@ -306,7 +306,7 @@ async function onHttpReq(
         }
       });
     } else {
-      let rawData: Array<any>;
+      let rawData: Array<any> = [];
       req.on("data", (chunk) => rawData.push(chunk));
       req.on("end", async () => {
         try {
