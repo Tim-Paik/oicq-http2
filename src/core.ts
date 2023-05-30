@@ -148,7 +148,7 @@ function createServer(config: Config) {
   }
   let server = http.createServer((req, res) => {
     res.setHeader("Content-Type", "application/json; charset=utf-8");
-    if(config.enable_cors) res.setHeader('Access-Control-Allow-Origin', '*');
+    if (config.enable_cors) res.setHeader('Access-Control-Allow-Origin', '*');
     if (!config.use_http) return res.writeHead(404).end();
     if (req.method === "OPTIONS" && config.enable_cors) {
       return res
@@ -263,10 +263,16 @@ async function onHttpReq(
     bot.logger.debug(`收到GET请求: ` + req.url);
     const params = url.searchParams;
     try {
-      const ret = await api.apply({ action, params });
+      let ret;
+      if (extra.extraActions.hasOwnProperty(action)) {
+        ret = await extra.apply(bot, { action, params });
+      } else {
+        ret = await api.apply({ action, params });
+      }
       res.end(ret);
     } catch (e) {
-      res.writeHead(404).end();
+      bot.logger.error(e);
+      res.writeHead(404).end("404 Not Found");
     }
   } else if (req.method === "POST") {
     if(req.headers["content-type"]?.includes("form-data")) {
