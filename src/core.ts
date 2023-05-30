@@ -7,12 +7,14 @@ import { WebSocketServer } from "ws";
 import crypto from "crypto";
 import * as oicq from "icqq";
 import * as api from "./api";
-import { Config, configDir } from "./configs";
+import { Config, httpReverse, configDir, sampleConfig } from "./configs";
 import { AddressInfo } from "net";
 import * as extra from "./extra";
+import axios from "axios";
 
 let bot: oicq.Client;
 let wss: WebSocketServer;
+let http_reverse: httpReverse;
 
 function startup(account: number, configs: { [k: string]: Config }) {
   const passDir = path.join(configDir, account.toString());
@@ -27,22 +29,8 @@ function startup(account: number, configs: { [k: string]: Config }) {
   } else if (accountConfig !== undefined) {
     config = accountConfig;
   } else {
-    config = {
-      platform: 5,
-      ignore_self: false,
-      log_level: "info",
-      host: "0.0.0.0",
-      port: 5700,
-      use_http: true,
-      use_ws: true,
-      access_token: "",
-      enable_cors: true,
-      enable_heartbeat: true,
-      heartbeat_interval: 15000,
-      rate_limit_interval: 500,
-    };
+    config = sampleConfig.general;
   }
-
   if (config.enable_heartbeat && config.use_ws) {
     setInterval(() => {
       const json = JSON.stringify({
@@ -58,6 +46,7 @@ function startup(account: number, configs: { [k: string]: Config }) {
       }
     }, config.heartbeat_interval);
   }
+  http_reverse = config.http_reverse || [];
   createBot(account, config, passFile);
   createServer(config);
   setTimeout(botLogin, 500, account, passFile);
@@ -135,6 +124,22 @@ function dipatch(event: any) {
     bot.logger.debug(`正向WS上报事件: ` + json);
     ws.send(json);
   });
+  http_reverse?.filter(x => x.enable).forEach((config) => {
+    const sign = crypto
+      .createHmac("sha1", config.secret || "")
+      .update(json)
+      .digest("hex");
+    axios
+      .post(config.url, json, {
+        headers: {
+          "Content-Type": "application/json",
+          "X-Signature": `sha1=${sign}`,
+        },
+      })
+      .catch((err) => {
+        bot.logger.error(`反向HTTP上报事件失败: ${err}`);
+      });
+  })
 }
 
 function createServer(config: Config) {
