@@ -11,6 +11,7 @@ import { Config, httpReverse, configDir, sampleConfig } from "./configs";
 import { AddressInfo } from "net";
 import * as extra from "./extra";
 import axios from "axios";
+import qs from "querystring";
 
 let bot: oicq.Client;
 let wss: WebSocketServer;
@@ -118,7 +119,33 @@ function createBot(account: number, config: Config, passFile: string) {
   bot.on("message", dipatch);
 }
 
+function escapeCQInside(s: string) {
+  if (s === "&") return "&amp;"
+  if (s === ",") return "&#44;"
+  if (s === "[") return "&#91;"
+  if (s === "]") return "&#93;"
+  return ""
+}
+
+function genCqcode(content: MessageElem[]) {
+  let cqcode = ""
+  for (let elem of content) {
+      if (elem.type === "text") {
+          cqcode += elem.text
+          continue
+      }
+      const tmp = { ...elem } as Partial<MessageElem>
+      delete tmp.type
+      const str = qs.stringify(tmp as NodeJS.Dict<any>, ",", "=", { encodeURIComponent: (s) => s.replace(/&|,|\[|\]/g, escapeCQInside) })
+      cqcode += "[CQ:" + elem.type + (str ? "," : "") + str + "]"
+  }
+  return cqcode
+}
+
 function dipatch(event: any) {
+  if (event.message !== undefined) {
+    event.cq_message = genCqcode(event.message)
+  }
   const json = JSON.stringify(event);
   wss?.clients.forEach((ws) => {
     bot.logger.debug(`正向WS上报事件: ` + json);
