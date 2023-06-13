@@ -7,12 +7,15 @@ import { WebSocketServer } from "ws";
 import crypto from "crypto";
 import * as oicq from "icqq";
 import * as api from "./api";
-import { Config, configDir } from "./configs";
+import { Config, httpReverse, configDir, sampleConfig } from "./configs";
 import { AddressInfo } from "net";
 import * as extra from "./extra";
+import axios from "axios";
+import qs from "querystring";
 
 let bot: oicq.Client;
 let wss: WebSocketServer;
+let http_reverse: httpReverse;
 
 function startup(account: number, configs: { [k: string]: Config }) {
   const passDir = path.join(configDir, account.toString());
@@ -27,22 +30,8 @@ function startup(account: number, configs: { [k: string]: Config }) {
   } else if (accountConfig !== undefined) {
     config = accountConfig;
   } else {
-    config = {
-      platform: 5,
-      ignore_self: false,
-      log_level: "info",
-      host: "0.0.0.0",
-      port: 5700,
-      use_http: true,
-      use_ws: true,
-      access_token: "",
-      enable_cors: true,
-      enable_heartbeat: true,
-      heartbeat_interval: 15000,
-      rate_limit_interval: 500,
-    };
+    config = sampleConfig.general;
   }
-
   if (config.enable_heartbeat && config.use_ws) {
     setInterval(() => {
       const json = JSON.stringify({
@@ -58,6 +47,7 @@ function startup(account: number, configs: { [k: string]: Config }) {
       }
     }, config.heartbeat_interval);
   }
+  http_reverse = config.http_reverse || [];
   createBot(account, config, passFile);
   createServer(config);
   setTimeout(botLogin, 500, account, passFile);
@@ -129,12 +119,54 @@ function createBot(account: number, config: Config, passFile: string) {
   bot.on("message", dipatch);
 }
 
+function escapeCQInside(s: string) {
+  if (s === "&") return "&amp;"
+  if (s === ",") return "&#44;"
+  if (s === "[") return "&#91;"
+  if (s === "]") return "&#93;"
+  return ""
+}
+
+function genCqcode(content: MessageElem[]) {
+  let cqcode = ""
+  for (let elem of content) {
+      if (elem.type === "text") {
+          cqcode += elem.text
+          continue
+      }
+      const tmp = { ...elem } as Partial<MessageElem>
+      delete tmp.type
+      const str = qs.stringify(tmp as NodeJS.Dict<any>, ",", "=", { encodeURIComponent: (s) => s.replace(/&|,|\[|\]/g, escapeCQInside) })
+      cqcode += "[CQ:" + elem.type + (str ? "," : "") + str + "]"
+  }
+  return cqcode
+}
+
 function dipatch(event: any) {
+  if (event.message !== undefined) {
+    event.cq_message = genCqcode(event.message)
+  }
   const json = JSON.stringify(event);
   wss?.clients.forEach((ws) => {
     bot.logger.debug(`正向WS上报事件: ` + json);
     ws.send(json);
   });
+  http_reverse?.filter(x => x.enable).forEach((config) => {
+    const sign = crypto
+      .createHmac("sha1", config.secret || "")
+      .update(json)
+      .digest("hex");
+    axios
+      .post(config.url, json, {
+        headers: {
+          "Content-Type": "application/json",
+          "X-Signature": `sha1=${sign}`,
+        },
+      })
+      .catch((err) => {
+        bot.logger.error(`反向HTTP上报事件失败: ${err}`);
+      });
+  })
 }
 
 function createServer(config: Config) {
@@ -143,7 +175,7 @@ function createServer(config: Config) {
   }
   let server = http.createServer((req, res) => {
     res.setHeader("Content-Type", "application/json; charset=utf-8");
-    if(config.enable_cors) res.setHeader('Access-Control-Allow-Origin', '*');
+    if (config.enable_cors) res.setHeader('Access-Control-Allow-Origin', '*');
     if (!config.use_http) return res.writeHead(404).end();
     if (req.method === "OPTIONS" && config.enable_cors) {
       return res
@@ -258,10 +290,16 @@ async function onHttpReq(
     bot.logger.debug(`收到GET请求: ` + req.url);
     const params = url.searchParams;
     try {
-      const ret = await api.apply({ action, params });
+      let ret;
+      if (extra.extraActions.hasOwnProperty(action)) {
+        ret = await extra.apply(bot, { action, params });
+      } else {
+        ret = await api.apply({ action, params });
+      }
       res.end(ret);
     } catch (e) {
-      res.writeHead(404).end();
+      bot.logger.error(e);
+      res.writeHead(404).end("404 Not Found");
     }
   } else if (req.method === "POST") {
     if(req.headers["content-type"]?.includes("form-data")) {
@@ -295,7 +333,7 @@ async function onHttpReq(
         }
       });
     } else {
-      let rawData: Array<any>;
+      let rawData: Array<any> = [];
       req.on("data", (chunk) => rawData.push(chunk));
       req.on("end", async () => {
         try {

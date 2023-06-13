@@ -1,5 +1,6 @@
 import * as oicq from "oicq";
 import { availableActions } from "./actions";
+import { segment } from "icqq";
 
 export class NotFoundError extends Error {}
 
@@ -100,7 +101,7 @@ export async function apply({
     availableActions.includes(action)
   ) {
     const param_arr = [];
-    
+
     // FIX: URLSearchParams 对象在处理为 params 时转换错误
     if(params instanceof URLSearchParams) {
       params = Object.fromEntries(params);
@@ -119,7 +120,9 @@ export async function apply({
         }
       }
     }
-
+    if (params?.auto_escape && action.startsWith("send") && action.endsWith("Msg")) {
+        param_arr[1] = segment.fromCqcode(param_arr[1])
+    }
     let ret;
     if (is_queue) {
       queue.push({ action, param_arr });
