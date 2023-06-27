@@ -60,6 +60,9 @@ function createBot(account: number, config: Config, passFile: string) {
     ignore_self: config.ignore_self,
     data_dir: configDir,
   });
+  if((config as any).qsign != undefined) {
+    (bot as any).sig.sign_api_addr = (config as any).qsign
+  }
   api.setBot(bot, config.rate_limit_interval);
 
   bot.on("system.login.slider", () => {

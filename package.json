@@ -24,7 +24,7 @@
   },
   "dependencies": {
     "axios": "^0.27.2",
-    "icqq": "^0.3.3",
+    "icqq": "^0.4.7",
     "multiparty": "^4.2.3",
     "ws": "^8.8.1"
   }
