@@ -1,7 +1,7 @@
 import path from "path";
 import fs from "fs";
 import os from "os";
-import { Platform, LogLevel } from "oicq";
+import { Platform, LogLevel } from "icqq";
 
 export type httpReverse = Array<{ enable: boolean, url: string, secret?: string}>;
 
@@ -25,9 +25,9 @@ export const configDir = path.join(os.homedir(), ".oicq");
 const configPath = path.join(configDir, "config.json");
 export const sampleConfig = {
     general: {
-        platform: 5,
+        platform: Platform.iPad,
         ignore_self: false,
-        log_level: "info",
+        log_level: "info" as LogLevel,
         host: "0.0.0.0",
         port: 5700,
         use_http: true,

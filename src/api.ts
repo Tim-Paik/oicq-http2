@@ -1,4 +1,4 @@
-import * as oicq from "oicq";
+import * as oicq from "icqq";
 import { availableActions } from "./actions";
 import { segment } from "icqq";
 

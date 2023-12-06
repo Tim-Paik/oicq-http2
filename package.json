@@ -1,6 +1,6 @@
 {
   "name": "oicq-http2",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "source": "src/main.ts",
   "main": "bin/oicq-http2.js",
   "bin": {
@@ -17,15 +17,15 @@
     "start": "npm run prepare && node bin/oicq-http2.js"
   },
   "devDependencies": {
-    "@types/multiparty": "^0.0.33",
-    "@types/node": "^20.5.0",
-    "@types/ws": "^8.5.5",
-    "esbuild": "^0.19.2"
+    "@types/multiparty": "^0.0.36",
+    "@types/node": "^20.10.3",
+    "@types/ws": "^8.5.10",
+    "esbuild": "^0.19.8"
   },
   "dependencies": {
-    "axios": "^1.4.0",
-    "icqq": "^0.5.0",
+    "axios": "^1.6.2",
+    "icqq": "^0.6.5",
     "multiparty": "^4.2.3",
-    "ws": "^8.13.0"
+    "ws": "^8.14.2"
   }
 }

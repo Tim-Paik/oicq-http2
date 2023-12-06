@@ -12,6 +12,7 @@ import { AddressInfo } from "net";
 import * as extra from "./extra";
 import axios from "axios";
 import qs from "querystring";
+import { MessageElem } from "icqq";
 
 let bot: oicq.Client;
 let wss: WebSocketServer;

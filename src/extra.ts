@@ -24,7 +24,7 @@ export const extraActions = {
   },
 
   get_login_info: async (bot: oicq.Client, data: any): Promise<Object> => {
-    let onlinestatus: string;
+    let onlinestatus: string = "";
     switch (bot.status) {
       case oicq.OnlineStatus.Absent:
         onlinestatus = "absent";
