@@ -20,7 +20,7 @@ let http_reverse: httpReverse;
 
 function startup(account: number, configs: { [k: string]: Config }) {
   const passDir = path.join(configDir, account.toString());
-  if(!fs.existsSync(passDir)) fs.mkdirSync(passDir);
+  if (!fs.existsSync(passDir)) fs.mkdirSync(passDir);
   const passFile = path.join(passDir, "password");
   const generalConfig = configs["general"];
   const accountConfig = configs[account.toString()];
@@ -61,8 +61,8 @@ function createBot(account: number, config: Config, passFile: string) {
     ignore_self: config.ignore_self,
     data_dir: configDir,
   });
-  if((config as any).qsign != undefined) {
-    (bot as any).sig.sign_api_addr = (config as any).qsign
+  if (config.qsign_api_addr != undefined) {
+    bot.sig["sign_api_addr"] = config.qsign_api_addr
   }
   api.setBot(bot, config.rate_limit_interval);
 
@@ -134,14 +134,14 @@ function escapeCQInside(s: string) {
 function genCqcode(content: MessageElem[]) {
   let cqcode = ""
   for (let elem of content) {
-      if (elem.type === "text") {
-          cqcode += elem.text
-          continue
-      }
-      const tmp = { ...elem } as Partial<MessageElem>
-      delete tmp.type
-      const str = qs.stringify(tmp as NodeJS.Dict<any>, ",", "=", { encodeURIComponent: (s) => s.replace(/&|,|\[|\]/g, escapeCQInside) })
-      cqcode += "[CQ:" + elem.type + (str ? "," : "") + str + "]"
+    if (elem.type === "text") {
+      cqcode += elem.text
+      continue
+    }
+    const tmp = { ...elem } as Partial<MessageElem>
+    delete tmp.type
+    const str = qs.stringify(tmp as NodeJS.Dict<any>, ",", "=", { encodeURIComponent: (s) => s.replace(/&|,|\[|\]/g, escapeCQInside) })
+    cqcode += "[CQ:" + elem.type + (str ? "," : "") + str + "]"
   }
   return cqcode
 }
@@ -207,9 +207,9 @@ function createServer(config: Config) {
   });
   if (config.use_ws) {
     wss = new WebSocketServer({ server });
-    wss.on("error", () => {});
+    wss.on("error", () => { });
     wss.on("connection", (ws, req) => {
-      ws.on("error", () => {});
+      ws.on("error", () => { });
       if (config.access_token) {
         if (req.url) {
           const url = new URL("http://www.example.com/" + req.url);
@@ -306,17 +306,17 @@ async function onHttpReq(
       res.writeHead(404).end("404 Not Found");
     }
   } else if (req.method === "POST") {
-    if(req.headers["content-type"]?.includes("form-data")) {
+    if (req.headers["content-type"]?.includes("form-data")) {
       // SS：特殊处理表单提交
       const form = new multiparty.Form();
-      form.parse(req, async function(err, fields, files) {
-        if(err == null) {
+      form.parse(req, async function (err, fields, files) {
+        if (err == null) {
           try {
             let params = fields;
             Object.keys(fields).forEach((item: string) => {
               params[item] = fields[item][0];
             })
-            if(Object.keys(files).length > 0) {
+            if (Object.keys(files).length > 0) {
               // 有文件的话只取第一个
               params.file = files.file[0];
             }
@@ -327,7 +327,7 @@ async function onHttpReq(
               ret = await api.apply({ action, params });
             }
             return res.end(ret);
-          } catch(e) {
+          } catch (e) {
             console.log(e)
             if (e instanceof api.NotFoundError) return res.writeHead(404).end();
             else return res.writeHead(400).end();
@@ -419,7 +419,7 @@ function loop() {
           break;
       }
     })
-    .on("error", () => {});
+    .on("error", () => { });
 }
 
 export default startup;

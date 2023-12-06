@@ -3,7 +3,7 @@ import fs from "fs";
 import os from "os";
 import { Platform, LogLevel } from "icqq";
 
-export type httpReverse = Array<{ enable: boolean, url: string, secret?: string}>;
+export type httpReverse = Array<{ enable: boolean, url: string, secret?: string }>;
 
 export type Config = {
   platform: Platform;
@@ -18,33 +18,35 @@ export type Config = {
   enable_heartbeat: boolean;
   heartbeat_interval: number;
   rate_limit_interval: number;
-  http_reverse?: httpReverse
+  http_reverse?: httpReverse;
+  qsign_api_addr: string;
 };
 
 export const configDir = path.join(os.homedir(), ".oicq");
 const configPath = path.join(configDir, "config.json");
 export const sampleConfig = {
-    general: {
-        platform: Platform.iPad,
-        ignore_self: false,
-        log_level: "info" as LogLevel,
-        host: "0.0.0.0",
-        port: 5700,
-        use_http: true,
-        use_ws: true,
-        access_token: "",
-        enable_cors: true,
-        enable_heartbeat: true,
-        heartbeat_interval: 15000,
-        rate_limit_interval: 500,
-        http_reverse: [
-          {
-            enable: false,
-            url: "http://127.0.0.1:5000",
-            secret: "",
-          }
-        ]
-    }
+  general: {
+    platform: Platform.iPad,
+    ignore_self: false,
+    log_level: "info" as LogLevel,
+    host: "0.0.0.0",
+    port: 5700,
+    use_http: true,
+    use_ws: true,
+    access_token: "",
+    enable_cors: true,
+    enable_heartbeat: true,
+    heartbeat_interval: 15000,
+    rate_limit_interval: 500,
+    http_reverse: [
+      {
+        enable: false,
+        url: "http://127.0.0.1:5000",
+        secret: "",
+      }
+    ],
+    qsign_api_addr: "",
+  }
 };
 
 if (!fs.existsSync(configDir)) fs.mkdirSync(configDir);
